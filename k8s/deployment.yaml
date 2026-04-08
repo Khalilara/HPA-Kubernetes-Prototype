@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-cpu-app
+  namespace: default
+spec:
+  # Replicas initiales (le HPA modifiera ce nombre)
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hpa-cpu-app
+  template:
+    metadata:
+      labels:
+        app: hpa-cpu-app
+    spec:
+      containers:
+      - name: hpa-cpu-app
+        image: hpa-cpu-app:latest
+        imagePullPolicy: Never  # Utilise l'image locale (pas de registry)
+        ports:
+        - containerPort: 5000
+          name: http
+        
+        # IMPORTANT: Définir les ressources pour que le HPA puisse mesurer l'utilisation CPU
+        resources:
+          requests:
+            cpu: 100m        # 0.1 CPU - demande minimum
+            memory: 128Mi    # 128 MB de mémoire
+          limits:
+            cpu: 500m        # 0.5 CPU - limite maximale par container
+            memory: 256Mi    # 256 MB de mémoire maximum
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5

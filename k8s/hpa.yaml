@@ -1,0 +1,39 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-cpu-app-scaler
+  namespace: default
+spec:
+  # Référence au Deployment à scaler
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hpa-cpu-app
+  
+  # Configuration de scaling
+  minReplicas: 1      # Minimum 1 pod
+  maxReplicas: 10     # Maximum 10 pods (comme demandé)
+  
+  # Métriques de scaling
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Trigger à 70% CPU moyen (comme demandé)
+  
+  # Comportement de scaling (optionnel, mais utile)
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30   # Attendre 30 sec avant de scaler down (plus rapide pour démo)
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0     # Scaler immédiatement vers le haut
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
